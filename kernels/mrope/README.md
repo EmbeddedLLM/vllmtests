@@ -1,16 +1,13 @@
+## Setup
+1. Install liger_kernel
+```bash
+git clone https://github.com/linkedin/Liger-Kernel.git
+cd Liger-Kernel
+python3 -m pip install -e .
+```
 
-### Version 1
-`python3 test_mrope_simple.py`
-
-### Version 2
-#### Run full benchmark suite
-`python3 test_mrope.py`
-
-#### Run with custom parameters
-`python3 test_mrope.py --warmup 5 --benchmark 50 --output-dir my_results`
-
-#### Test specific models
-`python3 test_mrope.py --models Qwen2-VL-2B Qwen2.5-VL-3B`
-
-#### Run pytest tests
-`pytest test_mrope.py::TestMRoPEKernels -v`
+## Run instructions
+1. Check for correctness: `pytest test_correctness.py -v > test_correctness.log 2>&1`
+2. Benchmark:
+- Quick benchmark: `python benchmark.py --quick --output quick_results.json`
+- Full benchmark: `python benchmark.py --output full_results.json`
