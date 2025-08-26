@@ -1,7 +1,7 @@
 #!/bin/bash
 
-declare -a in_len=(1000)
-declare -a out_len=(1000)
+declare -a in_len=(2000 1000 5000 10000 3200)
+declare -a out_len=(150 1000 1000 1000 800)
 
 
 help() {
