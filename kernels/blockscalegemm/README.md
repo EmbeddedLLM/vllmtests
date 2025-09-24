@@ -59,6 +59,7 @@ The configurations that are interested in TP8 (8 GPUs)
     | Qwen3-235B-FP8 (TP8) | 1.165692083x | 16.6% boost |
     | Qwen3-Coder-480B-FP8 (TP8) | 1.174530533x | 17% boost |
     | Qwen3-Coder-480B-FP8 (TP4) | 1.17128822x | 17% boost |
+  - Tuned for vLLM default CUDAGraph Capture Sizes: `l_m = [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304, 312, 320, 328, 336, 344, 352, 360, 368, 376, 384, 392, 400, 408, 416, 424, 432, 440, 448, 456, 464, 472, 480, 488, 496, 504, 512, 1024, 8192]`
 
 - Untuned large shapes bpreshuffle block scaled GEMM around 2 times better than normal block scaled GEMM on average across all cases.
   - `l_m = [10000, 16384, 20480, 32768, 65536, 128000, 131072, 260000, 262144]`
