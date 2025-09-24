@@ -61,8 +61,21 @@ The configurations that are interested in TP8 (8 GPUs)
     | Qwen3-Coder-480B-FP8 (TP4) | 1.17128822x | 17% boost |
   - Tuned for vLLM default CUDAGraph Capture Sizes: `l_m = [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304, 312, 320, 328, 336, 344, 352, 360, 368, 376, 384, 392, 400, 408, 416, 424, 432, 440, 448, 456, 464, 472, 480, 488, 496, 504, 512, 1024, 8192]`
 
+  - 1079 out of 1104 (MNK-shape show speed up). 
+  - 25 out of 1104 shapes shows slowdown of average 1% and up to 3.4% 
+
 - Untuned large shapes bpreshuffle block scaled GEMM around 2 times better than normal block scaled GEMM on average across all cases.
   - `l_m = [10000, 16384, 20480, 32768, 65536, 128000, 131072, 260000, 262144]`
+  - and there seems to have some numerical issue for size 260000
+    ```csv
+    dtype,m,n,k,preshuffle,us,failed
+    torch.bfloat16,260000,7168,256,True,2608.56526,0.00012249581050127745
+    torch.bfloat16,260000,7168,2048,True,11240.853494949492,0.00012307692668400705
+    torch.bfloat16,260000,4608,7168,True,25362.158949999986,0.00012307692668400705
+    torch.bfloat16,260000,7168,2304,True,12459.498252525238,0.00012307692668400705
+    torch.bfloat16,260000,6144,1536,True,7497.625349999996,0.00012307692668400705
+    torch.bfloat16,260000,6144,3072,True,13952.130918367338,0.00012307692668400705
+    ```
 
 
 NOTE: `all cases` only refers to the M,N,K-shapes that are of interest in current experiments.
