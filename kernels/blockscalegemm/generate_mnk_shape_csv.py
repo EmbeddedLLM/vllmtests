@@ -14,9 +14,14 @@ l_nk = [
     (512, 7168),
     (4096, 512),
     (2112,7168), # from vllm shared expert
+
     # # Qwen3-235B-FP8
     (1280,4096), # TP8
     (4096,1024), # TP8
+    
+    # Qwen3-235B-A22B-Instruct-2507-FP8 TP 4
+    (2304,4096), # TP4
+    (4096,2048), # TP4
     
     # Qwen3-Coder-480B-FP8
     (1792,6144), # TP8
