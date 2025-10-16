@@ -8,11 +8,11 @@
 # - "untuned_true": Uses 4 GPUs in parallel and runs tasks with preshuffle=True (no freezes)
 # - "untuned_false": Uses a single GPU and runs tasks with preshuffle=False one by one (avoids freezes)
 
-MODE="untuned_false"
+MODE="tuned"
 
 # --- Script General Settings ---
 PYTHON_SCRIPT="test_gemm_a8w8_ptpc.py"
-GPUS_TO_USE=(0 1 2 3)
+GPUS_TO_USE=(0 1 2 3 4 5 6 7)
 NUM_GPUS=${#GPUS_TO_USE[@]}
 LOCK_FILE_1="/opt/aiter/aiter/jit/build/lock_module_gemm_a8w8"
 LOCK_FILE_2="/opt/aiter/aiter/jit/build/module_gemm_a8w8/build/lock"
