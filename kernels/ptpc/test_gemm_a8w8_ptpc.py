@@ -33,11 +33,8 @@ def run_gemm_ck(x, weight, x_scale, w_scale, bias=None, dtype=dtypes.bf16):
     return aiter.gemm_a8w8_CK(x, weight, x_scale, w_scale, bias, dtype)
 
 @perftest()
-def run_gemm_ck_bpreshuffle(x, weight_shuffled, x_scale, w_scale, bias=None, dtype=dtypes.bf16):
-    out = aiter.gemm_a8w8_bpreshuffle(x, weight_shuffled, x_scale, w_scale, bias=None, dtype=dtypes.bf16)
-    if bias is not None:
-        out += bias
-    return out
+def run_gemm_ck_bpreshuffle(x, weight, x_scale, w_scale, bias=None, dtype=dtypes.bf16):
+    return aiter.gemm_a8w8_bpreshuffle(x, weight, x_scale, w_scale, None, dtype)
 
 @perftest()
 def run_gemm_asm(x, weightshuffle, x_scale, w_scale, bias=None, dtype=dtypes.bf16):
@@ -111,26 +108,26 @@ def run_torch_scaled_mm(x, weight, x_scale, w_scale, bias=None, out_dtype=dtypes
         output = output + bias.to(output.dtype)
     return output
 
-@lru_cache(maxsize=1)
-def init_hipblas():
-    hipb_create_extension()
+# @lru_cache(maxsize=1)
+# def init_hipblas():
+#     hipb_create_extension()
 
-@perftest(num_iters=TEST_NUM_ITERS, needTrace=False, num_warmup=10, testGraph=False, num_rotate_args=0)
-def run_gemm_hipbmm(x, weight_shuffled, x_scale, w_scale, bias=None, dtype=dtypes.bf16):
-    weight_shuffled_transposed = weight_shuffled.t()
-    if w_scale is not None:
-        w_scale = w_scale.t()
-    return hipb_mm(
-        x,
-        weight_shuffled_transposed,
-        solution_index=-1,
-        bias=bias,
-        out_dtype=dtype,
-        scaleA=x_scale,
-        scaleB=w_scale,
-        scaleOut=None,
-        bpreshuffle=True,
-    )
+# @perftest(num_iters=TEST_NUM_ITERS, needTrace=False, num_warmup=10, testGraph=False, num_rotate_args=0)
+# def run_gemm_hipbmm(x, weight_shuffled, x_scale, w_scale, bias=None, dtype=dtypes.bf16):
+#     weight_shuffled_transposed = weight_shuffled.t()
+#     if w_scale is not None:
+#         w_scale = w_scale.t()
+#     return hipb_mm(
+#         x,
+#         weight_shuffled_transposed,
+#         solution_index=-1,
+#         bias=bias,
+#         out_dtype=dtype,
+#         scaleA=x_scale,
+#         scaleB=w_scale,
+#         scaleOut=None,
+#         bpreshuffle=True,
+#     )
 
 @benchmark()
 def benchmark_ptpc_kernels(dtype, m, n, k, preshuffle: bool):
@@ -170,25 +167,25 @@ def benchmark_ptpc_kernels(dtype, m, n, k, preshuffle: bool):
         print(f"    -> torch._scaled_mm execution failed: {e}")
 
 
-    us_hipbmm = float('inf')
-    err_hipbmm = 1.0
-    if preshuffle and get_gfx() == "gfx942":
-        try:
-           init_hipblas() 
-           weight_shuffled_for_hipbmm = shuffle_weight(weight, layout=(16, 16))
-           hipbmm_out, us_hipbmm = run_gemm_hipbmm(x, weight_shuffled_for_hipbmm, x_scale, w_scale, bias, dtype)
-           err_hipbmm = checkAllclose(ref_out, hipbmm_out, rtol=1e-2, atol=1e-2)
-        except Exception as e:
-           print(f"    -> hipbmm kernel execution failed: {e}")
+    # us_hipbmm = float('inf')
+    # err_hipbmm = 1.0
+    # if preshuffle and get_gfx() == "gfx942":
+    #     try:
+    #        init_hipblas() 
+    #        weight_shuffled_for_hipbmm = shuffle_weight(weight, layout=(16, 16))
+    #        hipbmm_out, us_hipbmm = run_gemm_hipbmm(x, weight_shuffled_for_hipbmm, x_scale, w_scale, bias, dtype)
+    #        err_hipbmm = checkAllclose(ref_out, hipbmm_out, rtol=1e-2, atol=1e-2)
+    #     except Exception as e:
+    #        print(f"    -> hipbmm kernel execution failed: {e}")
 
     return {
         "M": m, "N": n, "K": k, "dtype": "bf16", "preshuffle": preshuffle,
         "us_aiter": us_aiter,
         "us_torch_scaled_mm": us_torch_scaled_mm,
-        "us_hipbmm": us_hipbmm,
+        # "us_hipbmm": us_hipbmm,
         "err_aiter": err_aiter,
         "err_scaled_mm": err_scaled_mm,
-        "err_hipbmm": err_hipbmm,
+        # "err_hipbmm": err_hipbmm,
     }
 
 
@@ -263,6 +260,7 @@ if __name__ == "__main__":
         if res:
             res['Model'] = nk_to_model.get((n, k), "Unknown")
             df = pd.DataFrame([res])
+            # 'us_hipbmm'  'err_hipbmm'
             final_columns = ['Model', 'M', 'N', 'K', 'dtype', 'preshuffle', 'us_aiter', 'us_torch_scaled_mm', 'err_aiter', 'err_scaled_mm']
             df = df[final_columns]
             header = not os.path.exists(output_filename)
@@ -300,7 +298,7 @@ if __name__ == "__main__":
         
         df = pd.DataFrame(results)
         if not df.empty:
-            final_columns = ['Model', 'M', 'N', 'K', 'dtype', 'preshuffle', 'us_aiter', 'us_torch_scaled_mm','us_hipbmm', 'err_aiter', 'err_scaled_mm', 'err_hipbmm']
+            final_columns = ['Model', 'M', 'N', 'K', 'dtype', 'preshuffle', 'us_aiter', 'us_torch_scaled_mm', 'err_aiter', 'err_scaled_mm']
             df = df[final_columns]
         
         output_filename = f"ptpc_results_part_{start_index}_{end_index}.csv"

@@ -12,7 +12,7 @@ MODE="tuned"
 
 # --- Script General Settings ---
 PYTHON_SCRIPT="test_gemm_a8w8_ptpc.py"
-GPUS_TO_USE=(0 1 2 3 4 5 6 7)
+GPUS_TO_USE=(0 1 2 3)
 NUM_GPUS=${#GPUS_TO_USE[@]}
 LOCK_FILE_1="/opt/aiter/aiter/jit/build/lock_module_gemm_a8w8"
 LOCK_FILE_2="/opt/aiter/aiter/jit/build/module_gemm_a8w8/build/lock"
@@ -100,5 +100,3 @@ elif [ "$MODE" == "untuned_false" ]; then
 else
   echo "[ERROR] Invalid MODE set. Please choose 'tuned', 'untuned_true', or 'untuned_false'."
 fi
-
-    
