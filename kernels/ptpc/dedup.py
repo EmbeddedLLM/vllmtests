@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 # a8w8_bpreshuffle_tuned_gemm.csv
 # a8w8_tuned_gemm.csv
@@ -12,7 +11,9 @@ df = pd.read_csv(CSV_FILE)
 df = df[df['us'] != 'inf']
 
 # Convert 'us' column to numeric (in case it's stored as string)
-df['us'] = pd.to_numeric(df['us'])
+# errors='coerce' turns non-parseable data into NaN, then we drop them
+df['us'] = pd.to_numeric(df['us'], errors='coerce')
+df = df.dropna(subset=['us'])
 
 # Group by the key columns an
 # d find the row with minimum 'us' value
