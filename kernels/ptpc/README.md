@@ -13,6 +13,11 @@ Mainly tuned for the following models (not exhaustive list) :
 
 The configurations that are interested in TP8 (8 GPUs)
 
+Based on the latest format of `aiter/configs/a8w8_bpreshuffle_untuned_gemm.csv`, we adjusted the logic of our `generate_ptpc_shapes_csv.py` file.
+Running `python generate_ptpc_shapes_csv.py bpreshuffle` yields the untuned file for `bpreshuffle`,
+running `python generate_ptpc_shapes_csv.py ck` yields the untuned file for `ck`.
+Then continue with the Tuning Procedure below.
+
 ## Tuning Procedure
 
 The list of M-values in this script is carefully derived from the vLLM default cuda graph capture size 
