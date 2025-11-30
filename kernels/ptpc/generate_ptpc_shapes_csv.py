@@ -11,7 +11,7 @@ OPERATOR_CONFIGS = {
     },
     'ck': {
         'has_dtype': False,
-        'dtype_value': None
+        'dtype_value': [None]
     },
     # If there's a new operator, simply add a line here, for example:
     # 'new_op': {'has_dtype': True, 'dtype_value': 'torch.int8'},
@@ -43,19 +43,19 @@ l_m += [2048, 4096, 8192, 16384, 32768, 65536, 131072] + [2**i for i in range(18
 # ]
 
 l_nk = [
-    # llama4_tp8
-     (896, 5120), 
-     (4096, 640), 
-     (5120, 640), 
-     (5120, 2048),
+    # # llama4_tp8
+    #  (896, 5120), 
+    #  (4096, 640), 
+    #  (5120, 640), 
+    #  (5120, 2048),
 
-     #llama4_tp4
-     (1024, 5632),
-     (1056, 1408),
-     (1280, 4096),
-     (1408, 352),
-     (1408, 1408),
-     (4096, 1024),
+    #  #llama4_tp4
+    #  (1024, 5632),
+    #  (1056, 1408),
+    #  (1280, 4096),
+    #  (1408, 352),
+    #  (1408, 1408),
+    #  (4096, 1024),
 
      #qwen3_tp8 
      (1536, 2048),
@@ -72,20 +72,20 @@ l_nk = [
      (6144, 1536),
      (6144, 2048),
 
-    #deepseek_tp8
-    (192, 7168), # maybe this is the shared expert shape
+    # #deepseek_tp8
+    # (192, 7168), # maybe this is the shared expert shape
     
-    # DeepSeek-R1 TP8
-    (1536, 7168),
-    (3072, 1536),
-    (576, 7168),
-    (7168, 256),
-    (7168, 2048),
-    (4608, 7168),
-    (7168, 2304),
-    (512, 7168),
-    (4096, 512),
-    (2112,7168), # This shape is from fused_qkv_a_proj in the MLAModule
+    # # DeepSeek-R1 TP8
+    # (1536, 7168),
+    # (3072, 1536),
+    # (576, 7168),
+    # (7168, 256),
+    # (7168, 2048),
+    # (4608, 7168),
+    # (7168, 2304),
+    # (512, 7168),
+    # (4096, 512),
+    # (2112,7168), # This shape is from fused_qkv_a_proj in the MLAModule
 ]
 output_csv_file = 'ptpc_untuned_shapes.csv'
 
