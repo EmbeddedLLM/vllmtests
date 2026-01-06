@@ -9,6 +9,8 @@
 
 MODE=$1
 
+WORK_DIR=$(pwd)
+
 # Configuration area
 # Using the local path to avoid re-downloading from HF
 MODEL_PATH="/app/model/models--Qwen--Qwen3-Omni-30B-A3B-Instruct/snapshots/26291f793822fb6be9555850f06dfe95f2d7e695"
@@ -84,11 +86,11 @@ pip install "datasets<3.0.0"
 
 
 # Step 3: Run Evaluation
-# We go back to the test directory to store logs there
-cd /app/vllmtests
+# CRITICAL: Go back to the directory where we started the script to save logs there
+cd $WORK_DIR
 
 echo ">>> [1/1] Running lmms_eval (voicebench_openbookqa)..."
-echo ">>> Log file: eval_audio_${LOG_SUFFIX}.log"
+echo ">>> Log file will be in: $(pwd)/eval_audio_${LOG_SUFFIX}.log"
 
 # Note: Using 'model=$MODEL_PATH' to use local weights
 # 'enforce_eager' is controlled by $EAGER_BOOL
