@@ -12,13 +12,20 @@ All scripts accept a numeric parameter [1-4] to specify the run mode. The meanin
 - ### 3: Eager + No AITER
 - ### 4: Non-Eager (Graph) + No AITER
 
-Example of the run command format:
+Command format example (using Qwen2.5-Omni-7B as an example):
 - cd vllm-omni-tests/vllm-omni
 - ./Qwen2.5-Omni-7B_text_eval.sh 1
 - ./Qwen2.5-Omni-7B_text_eval.sh 2
+- ./Qwen2.5-Omni-7B_text_eval.sh 3
+- ./Qwen2.5-Omni-7B_text_eval.sh 4
+- ./Qwen2.5-Omni-7B_image_eval.sh 1
+- ./Qwen2.5-Omni-7B_image_eval.sh 2
 - ./Qwen2.5-Omni-7B_image_eval.sh 3
-
-etc..
+- ./Qwen2.5-Omni-7B_image_eval.sh 4
+- ./Qwen2.5-Omni-7B_audio_eval.sh 1
+- ./Qwen2.5-Omni-7B_audio_eval.sh 2
+- ./Qwen2.5-Omni-7B_audio_eval.sh 3
+- ./Qwen2.5-Omni-7B_audio_eval.sh 4
 
 
 
