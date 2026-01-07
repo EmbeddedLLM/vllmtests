@@ -1,19 +1,27 @@
 #!/bin/bash
-
 # Script Description: Audio Evaluation using lmms-eval (VoiceBench)
-# How to use: ./Qwen2.5-Omni-7B_audio_eval.sh [1|2|3|4]
+# How to use: ./Qwen2.5-Omni-7B_audio_eval.sh [1|2|3|4] [MODEL_PATH]
 # 1: Eager + AITER
 # 2: Non-Eager (Graph) + AITER
 # 3: Eager + No AITER
 # 4: Non-Eager (Graph) + No AITER
+# MODEL_PATH (optional): Override default model path
 
 MODE=$1
-
 WORK_DIR=$(pwd)
 
 # Configuration area
 # Using the local path to avoid re-downloading from HF
-MODEL_PATH="/app/model/models--Qwen--Qwen2.5-Omni-7B/snapshots/ae9e1690543ffd5c0221dc27f79834d0294cba00"
+DEFAULT_MODEL_PATH="/app/model/models--Qwen--Qwen2.5-Omni-7B/snapshots/ae9e1690543ffd5c0221dc27f79834d0294cba00"
+
+# Allow MODEL_PATH override via second argument
+if [ -n "$2" ]; then
+    MODEL_PATH="$2"
+    echo ">>> Using custom MODEL_PATH: $MODEL_PATH"
+else
+    MODEL_PATH="$DEFAULT_MODEL_PATH"
+    echo ">>> Using default MODEL_PATH: $MODEL_PATH"
+fi
 
 export HIP_VISIBLE_DEVICES=0,1
 TP_SIZE=2
@@ -21,6 +29,7 @@ TP_SIZE=2
 # Parameter check
 if [ -z "$MODE" ]; then
     echo "Error: Please specify mode 1-4"
+    echo "Usage: $0 [1|2|3|4] [MODEL_PATH]"
     exit 1
 fi
 
@@ -53,6 +62,7 @@ case $MODE in
         ;;
     *)
         echo "Error: The pattern must be 1, 2, 3, or 4."
+        echo "Usage: $0 [1|2|3|4] [MODEL_PATH]"
         exit 1
         ;;
 esac
@@ -84,7 +94,6 @@ pip install soundfile librosa
 # 4. Downgrade datasets (crucial for soundfile support)
 pip install "datasets<3.0.0"
 
-
 # Step 3: Run Evaluation
 # CRITICAL: Go back to the directory where we started the script to save logs there
 cd $WORK_DIR
@@ -107,6 +116,5 @@ echo "To follow logs: tail -f eval_audio_${LOG_SUFFIX}.log"
 
 # Optional: Wait for completion if you don't want to return immediately
 wait $EVAL_PID
-
 echo "Audio Eval Finished."
 tail -n 20 "eval_audio_${LOG_SUFFIX}.log"

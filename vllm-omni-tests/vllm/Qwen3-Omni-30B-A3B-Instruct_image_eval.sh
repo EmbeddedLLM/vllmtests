@@ -1,24 +1,32 @@
 #!/bin/bash
 
-# Script Description
-# How to use: ./Qwen2.5-Omni-7B_text_eval.sh [1|2|3|4]
+# Script Description: Image Evaluation using Mistral Evals (MathVista)
+# How to use: ./Qwen3-Omni-30B-A3B-Instruct_image_eval.sh [1|2|3|4]
 # 1: Eager + AITER
 # 2: Non-Eager (Graph) + AITER
 # 3: Eager + No AITER
 # 4: Non-Eager (Graph) + No AITER
 
-
 MODE=$1
 
 # Configuration area
+MODEL_PATH="/app/model/models--Qwen--Qwen3-Omni-30B-A3B-Instruct/snapshots/26291f793822fb6be9555850f06dfe95f2d7e695"
 
-MODEL_PATH="/app/model/models--Qwen--Qwen2.5-Omni-7B/snapshots/ae9e1690543ffd5c0221dc27f79834d0294cba00"
+# Allow MODEL_PATH override via second argument
+if [ -n "$2" ]; then
+    MODEL_PATH="$2"
+    echo ">>> Using custom MODEL_PATH: $MODEL_PATH"
+else
+    MODEL_PATH="$DEFAULT_MODEL_PATH"
+    echo ">>> Using default MODEL_PATH: $MODEL_PATH"
+fi
 
 export HIP_VISIBLE_DEVICES=0,1
 TP_SIZE=2
-PORT=6789
+PORT=8001
 SERVED_NAME="qwen-omni"
 
+# Kill previous instance
 pkill -9 -f "vllm serve"
 sleep 3
 
@@ -60,9 +68,8 @@ case $MODE in
         ;;
 esac
 
-SERVER_LOG="server_${LOG_SUFFIX}.log"
-EVAL_LOG="eval_${LOG_SUFFIX}.log"
-
+SERVER_LOG="server_image_${LOG_SUFFIX}.log"
+EVAL_LOG="eval_mistral_${LOG_SUFFIX}.log"
 
 # Step 1: Start the Server
 echo "Starting vLLM Server...: $SERVER_LOG"
@@ -73,13 +80,12 @@ nohup vllm serve $MODEL_PATH \
     --port $PORT \
     --gpu-memory-utilization 0.8 \
     --swap-space 16 \
-    --max-model-len 8192 \
+    --max-model-len 32768 \
     --disable-log-requests \
     $EAGER_ARG > $SERVER_LOG 2>&1 &
 
 SERVER_PID=$!
 echo "Server PID: $SERVER_PID. Waiting for service to be ready..."
-
 
 # Step 2: Wait for the service to start
 for i in {1..60}; do
@@ -103,24 +109,50 @@ for i in {1..60}; do
     fi
 done
 
+# Step 3: Prepare Mistral Evals Environment
+TEST_ROOT="/app/vllmtests"
+MISTRAL_DIR="$TEST_ROOT/mistral-evals"
 
-# Step 3: Run lm_eval
-echo ">>> [1/2]Running lm_eval (GSM8K)..."
-lm_eval \
-    --model local-completions \
-    --tasks gsm8k \
-    --model_args model=$SERVED_NAME,base_url=http://127.0.0.1:$PORT/v1/completions,tokenizer=$MODEL_PATH \
-    --batch_size 64 \
-    --output_path "results_${LOG_SUFFIX}" \
-    > $EVAL_LOG 2>&1
-echo "Text Eval Finished. Check $EVAL_LOG"
+# Ensure directory exists
+if [ ! -d "$TEST_ROOT" ]; then
+    mkdir -p $TEST_ROOT
+fi
 
+# Clone mistral-evals if not present
+if [ ! -d "$MISTRAL_DIR" ]; then
+    echo ">>> Cloning mistral-evals to $MISTRAL_DIR..."
+    git clone https://github.com/mistralai/mistral-evals.git $MISTRAL_DIR
+else
+    echo ">>> mistral-evals already exists at $MISTRAL_DIR"
+fi
 
+# Install dependencies
+echo ">>> Installing dependencies (fire==0.6.0)..."
+pip install fire==0.6.0
+
+# Step 4: Run Mistral Eval (MathVista)
+echo ">>> [1/1] Running Mistral Eval (mathvista)..."
+
+# Switch to mistral-evals directory to run
+cd $MISTRAL_DIR
+
+# Define output path relative to where we are executing
+OUTPUT_DIR="../results_mistral_${LOG_SUFFIX}"
+LOG_FILE="../eval_mistral_${LOG_SUFFIX}.log"
+
+# Run the python command
+python3 -m eval.run eval_vllm \
+    --model_name $SERVED_NAME \
+    --url http://127.0.0.1:$PORT \
+    --output_dir $OUTPUT_DIR \
+    --eval_name "mathvista" \
+    > $LOG_FILE 2>&1
+
+echo "Image Eval Finished. Check $TEST_ROOT/eval_mistral_${LOG_SUFFIX}.log"
 
 echo ">>> All Tests Done! Stopping server..."
 kill $SERVER_PID
 wait $SERVER_PID 2>/dev/null
 
-
-echo "GSM8K Result:"
-grep "exact_match" $EVAL_LOG || tail -n 10 $EVAL_LOG
+# Show last few lines of the log to see if there is a score
+tail -n 20 $LOG_FILE

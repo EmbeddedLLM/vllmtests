@@ -15,6 +15,15 @@ WORK_DIR=$(pwd)
 # Using the local path to avoid re-downloading from HF
 MODEL_PATH="/app/model/models--Qwen--Qwen3-Omni-30B-A3B-Instruct/snapshots/26291f793822fb6be9555850f06dfe95f2d7e695"
 
+# Allow MODEL_PATH override via second argument
+if [ -n "$2" ]; then
+    MODEL_PATH="$2"
+    echo ">>> Using custom MODEL_PATH: $MODEL_PATH"
+else
+    MODEL_PATH="$DEFAULT_MODEL_PATH"
+    echo ">>> Using default MODEL_PATH: $MODEL_PATH"
+fi
+
 export HIP_VISIBLE_DEVICES=0,1
 TP_SIZE=2
 
