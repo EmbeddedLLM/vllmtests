@@ -1,7 +1,4 @@
 env:
-  VLLM_BRANCH: "${VLLM_BRANCH:-main}"
-  VLLM_COMMIT: "${VLLM_COMMIT:-latest}"
-  DOCKER_IMAGE_TAG: "ghcr.io/embeddedllm/vllm-rocm-ci:${VLLM_COMMIT}"
   DOCKER_BUILDKIT: "1"
 
 # Reusable configuration anchor
@@ -61,8 +58,11 @@ steps:
         commands:
           # Retrieve build parameters from block step
           - echo "Retrieving build parameters..."
-          - export VLLM_BRANCH=$(buildkite-agent meta-data get "VLLM_BRANCH")
-          - export VLLM_COMMIT=$(buildkite-agent meta-data get "VLLM_COMMIT")
+          - echo "=== Debug: Available Metadata Keys ==="
+          - buildkite-agent meta-data keys
+          - echo "=== End Debug ==="
+          - export VLLM_BRANCH=$(buildkite-agent meta-data get "VLLM_BRANCH" --default="main")
+          - export VLLM_COMMIT=$(buildkite-agent meta-data get "VLLM_COMMIT" --default="latest")
           - export DOCKER_IMAGE_TAG="ghcr.io/embeddedllm/vllm-rocm-ci:${VLLM_COMMIT}"
           - echo "Build parameters:"
           - echo "  VLLM_BRANCH=${VLLM_BRANCH}"
