@@ -110,23 +110,24 @@ steps:
           - git clone --depth 1 --branch $${VLLM_BRANCH} https://github.com/vllm-project/vllm.git vllm-repo
           - cd vllm-repo && git checkout $${VLLM_COMMIT}
           - |
+            cd vllm-repo
             docker build \
               -f docker/Dockerfile.rocm \
-              -t ${DOCKER_IMAGE_TAG} \
+              -t $${DOCKER_IMAGE_TAG} \
               --target test \
               --build-arg REMOTE_VLLM=0 \
               --build-arg ARG_PYTORCH_ROCM_ARCH='gfx942' \
               --no-cache \
               --progress plain \
               .
-          - docker push ${DOCKER_IMAGE_TAG}
-          - echo "Docker image pushed successfully: ${DOCKER_IMAGE_TAG}"
+            docker push $${DOCKER_IMAGE_TAG}
+            echo "Docker image pushed successfully: $${DOCKER_IMAGE_TAG}"
 
-          # Store image tag for test steps
-          - buildkite-agent meta-data set "DOCKER_IMAGE_TAG" "${DOCKER_IMAGE_TAG}"
+            # Store image tag for test steps
+            buildkite-agent meta-data set "DOCKER_IMAGE_TAG" "$${DOCKER_IMAGE_TAG}"
 
-          # Logout for security
-          - docker logout ghcr.io
+            # Logout for security
+            docker logout ghcr.io
 
   # ============================================================================
   # Qwen2.5-Omni-7B Tests
