@@ -61,14 +61,36 @@ steps:
           - echo "=== Debug Available Metadata Keys ==="
           - buildkite-agent meta-data keys
           - echo "=== End Debug ==="
-          - export VLLM_BRANCH=$(buildkite-agent meta-data get "VLLM_BRANCH" --default="main")
-          - export VLLM_COMMIT=$(buildkite-agent meta-data get "VLLM_COMMIT" --default="latest")
-          - export DOCKER_IMAGE_TAG="ghcr.io/embeddedllm/vllm-rocm-ci:${VLLM_COMMIT}"
-          - echo "Build parameters:"
-          - echo "  VLLM_BRANCH=${VLLM_BRANCH}"
-          - echo "  VLLM_COMMIT=${VLLM_COMMIT}"
-          - echo "  DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG}"
-          - echo ""
+          - |
+            # Retrieve from block step metadata
+            VLLM_BRANCH=$(buildkite-agent meta-data get "VLLM_BRANCH" --default="main")
+            VLLM_COMMIT=$(buildkite-agent meta-data get "VLLM_COMMIT" --default="latest")
+
+            echo "Raw metadata values:"
+            echo "  VLLM_BRANCH='${VLLM_BRANCH}' (length: ${#VLLM_BRANCH})"
+            echo "  VLLM_COMMIT='${VLLM_COMMIT}' (length: ${#VLLM_COMMIT})"
+
+            # Handle empty strings (when metadata exists but is empty)
+            if [[ -z "${VLLM_BRANCH}" ]]; then
+              VLLM_BRANCH="main"
+              echo "⚠️  VLLM_BRANCH was empty, using default: main"
+            fi
+
+            if [[ -z "${VLLM_COMMIT}" ]]; then
+              VLLM_COMMIT="latest"
+              echo "⚠️  VLLM_COMMIT was empty, using default: latest"
+            fi
+
+            export VLLM_BRANCH
+            export VLLM_COMMIT
+            export DOCKER_IMAGE_TAG="ghcr.io/embeddedllm/vllm-rocm-ci:${VLLM_COMMIT}"
+
+            echo ""
+            echo "Build parameters:"
+            echo "  VLLM_BRANCH=${VLLM_BRANCH}"
+            echo "  VLLM_COMMIT=${VLLM_COMMIT}"
+            echo "  DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG}"
+            echo ""
 
           # Authenticate with GitHub Container Registry
           - echo "Authenticating with GitHub Container Registry..."
