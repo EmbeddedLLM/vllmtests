@@ -251,9 +251,9 @@ steps:
         depends_on: "build-vllm-docker"
         <<: *base-config
         commands:
-          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+          - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 1"
-          - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+          - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-image-mode1 \
@@ -265,7 +265,7 @@ steps:
               -v /home/amd/models:/app/model \
               -v $(pwd):/app/vllmtests \
               -e HF_HUB_CACHE=/app/model \
-              ${DOCKER_IMAGE_TAG} \
+              $${DOCKER_IMAGE_TAG} \
               bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_image_eval.sh 1 "Qwen/Qwen2.5-Omni-7B"
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -275,9 +275,9 @@ steps:
       #   depends_on: "qwen25-7b-image-m1"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 2"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen25-7b-image-mode2 \
@@ -289,7 +289,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_image_eval.sh 2 "Qwen/Qwen2.5-Omni-7B"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -299,9 +299,9 @@ steps:
       #   depends_on: "qwen25-7b-image-m2"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 3"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen25-7b-image-mode3 \
@@ -313,7 +313,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_image_eval.sh 3 "Qwen/Qwen2.5-Omni-7B"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -323,7 +323,7 @@ steps:
       #   depends_on: "qwen25-7b-image-m3"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 4"
       #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
       #     - |
@@ -337,7 +337,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_image_eval.sh 4 "Qwen/Qwen2.5-Omni-7B"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -349,9 +349,9 @@ steps:
         depends_on: "qwen25-7b-image-m1"
         <<: *base-config
         commands:
-          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+          - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 1"
-          - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+          - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-audio-mode1 \
@@ -363,7 +363,7 @@ steps:
               -v /home/amd/models:/app/model \
               -v $(pwd):/app/vllmtests \
               -e HF_HUB_CACHE=/app/model \
-              ${DOCKER_IMAGE_TAG} \
+              $${DOCKER_IMAGE_TAG} \
               bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_audio_eval.sh 1 "Qwen/Qwen2.5-Omni-7B"
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -373,9 +373,9 @@ steps:
       #   depends_on: "qwen25-7b-audio-m1"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 2"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen25-7b-audio-mode2 \
@@ -387,7 +387,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_audio_eval.sh 2 "Qwen/Qwen2.5-Omni-7B"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -397,9 +397,9 @@ steps:
       #   depends_on: "qwen25-7b-audio-m2"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 3"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen25-7b-audio-mode3 \
@@ -411,7 +411,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_audio_eval.sh 3 "Qwen/Qwen2.5-Omni-7B"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -421,9 +421,9 @@ steps:
       #   depends_on: "qwen25-7b-audio-m3"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 4"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen25-7b-audio-mode4 \
@@ -435,7 +435,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_audio_eval.sh 4 "Qwen/Qwen2.5-Omni-7B"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -455,9 +455,9 @@ steps:
         depends_on: "qwen25-7b-audio-m1"
         <<: *base-config
         commands:
-          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+          - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 1"
-          - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+          - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-text-mode1 \
@@ -469,7 +469,7 @@ steps:
               -v /home/amd/models:/app/model \
               -v $(pwd):/app/vllmtests \
               -e HF_HUB_CACHE=/app/model \
-              ${DOCKER_IMAGE_TAG} \
+              $${DOCKER_IMAGE_TAG} \
               bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_text_eval.sh 1 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -479,9 +479,9 @@ steps:
       #   depends_on: "qwen3-30b-text-m1"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 2"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen3-30b-text-mode2 \
@@ -493,7 +493,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_text_eval.sh 2 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -503,9 +503,9 @@ steps:
       #   depends_on: "qwen3-30b-text-m2"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 3"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen3-30b-text-mode3 \
@@ -517,7 +517,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_text_eval.sh 3 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -527,9 +527,9 @@ steps:
       #   depends_on: "qwen3-30b-text-m3"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 4"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen3-30b-text-mode4 \
@@ -541,7 +541,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_text_eval.sh 4 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -553,9 +553,9 @@ steps:
         depends_on: "qwen3-30b-text-m1"
         <<: *base-config
         commands:
-          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+          - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 1"
-          - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+          - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-image-mode1 \
@@ -567,7 +567,7 @@ steps:
               -v /home/amd/models:/app/model \
               -v $(pwd):/app/vllmtests \
               -e HF_HUB_CACHE=/app/model \
-              ${DOCKER_IMAGE_TAG} \
+              $${DOCKER_IMAGE_TAG} \
               bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_image_eval.sh 1 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -577,9 +577,9 @@ steps:
       #   depends_on: "qwen3-30b-image-m1"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 2"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen3-30b-image-mode2 \
@@ -591,7 +591,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_image_eval.sh 2 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -601,9 +601,9 @@ steps:
       #   depends_on: "qwen3-30b-image-m2"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 3"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen3-30b-image-mode3 \
@@ -615,7 +615,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_image_eval.sh 3 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -625,9 +625,9 @@ steps:
       #   depends_on: "qwen3-30b-image-m3"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 4"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen3-30b-image-mode4 \
@@ -639,7 +639,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_image_eval.sh 4 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -651,9 +651,9 @@ steps:
         depends_on: "qwen3-30b-image-m1"
         <<: *base-config
         commands:
-          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+          - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 1"
-          - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+          - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-audio-mode1 \
@@ -665,7 +665,7 @@ steps:
               -v /home/amd/models:/app/model \
               -v $(pwd):/app/vllmtests \
               -e HF_HUB_CACHE=/app/model \
-              ${DOCKER_IMAGE_TAG} \
+              $${DOCKER_IMAGE_TAG} \
               bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_audio_eval.sh 1 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -675,9 +675,9 @@ steps:
       #   depends_on: "qwen3-30b-audio-m1"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 2"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen3-30b-audio-mode2 \
@@ -689,7 +689,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_audio_eval.sh 2 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -699,9 +699,9 @@ steps:
       #   depends_on: "qwen3-30b-audio-m2"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 3"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen3-30b-audio-mode3 \
@@ -713,7 +713,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_audio_eval.sh 3 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
@@ -723,9 +723,9 @@ steps:
       #   depends_on: "qwen3-30b-audio-m3"
       #   <<: *base-config
       #   commands:
-      #     - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
       #     - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 4"
-      #     - echo "Using Docker image ${DOCKER_IMAGE_TAG}"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
       #     - |
       #       docker run --rm \
       #         --name vllm-test-qwen3-30b-audio-mode4 \
@@ -737,7 +737,7 @@ steps:
       #         -v /home/amd/models:/app/model \
       #         -v $(pwd):/app/vllmtests \
       #         -e HF_HUB_CACHE=/app/model \
-      #         ${DOCKER_IMAGE_TAG} \
+      #         $${DOCKER_IMAGE_TAG} \
       #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_audio_eval.sh 4 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
       #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
