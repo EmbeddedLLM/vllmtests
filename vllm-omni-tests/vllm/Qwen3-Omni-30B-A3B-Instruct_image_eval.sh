@@ -153,10 +153,11 @@ echo ">>> All Tests Done! Stopping server..."
 kill $SERVER_PID
 wait $SERVER_PID 2>/dev/null
 
+
+# Show last few lines of the log to see if there is a score
+tail -n 20 $LOG_FILE
+
 rm -rf $OUTPUT_DIR
 rm -rf $LOG_FILE
 cd ../
 rm -rf $MISTRAL_DIR
-
-# Show last few lines of the log to see if there is a score
-tail -n 20 $LOG_FILE
