@@ -18,18 +18,58 @@ x-base-config: &base-config
         limit: 2
   timeout_in_minutes: 60
 
+
 steps:
+  # ============================================================================
+  # Input Form - Collect Build Parameters
+  # ============================================================================
+  - block: ":gear: Configure Build Parameters"
+    key: "input-params"
+    prompt: "Select the vLLM branch and commit to test"
+    fields:
+      - select: "vLLM Branch"
+        key: "VLLM_BRANCH"
+        hint: "Select the branch to clone from github.com/vllm-project/vllm"
+        required: false
+        default: "main"
+        options:
+          - label: "Main (Stable)"
+            value: "main"
+          - label: "Develop (Latest)"
+            value: "develop"
+          - label: "v0.5.0 (Release)"
+            value: "v0.5.0"
+          - label: "v0.4.2 (Older Release)"
+            value: "v0.4.2"
+      - text: "vLLM Commit"
+        key: "VLLM_COMMIT"
+        hint: "Enter commit SHA or 'latest' for HEAD of selected branch"
+        required: false
+        default: "latest"
+
   # ============================================================================
   # Build Phase
   # ============================================================================
   - group: ":docker: Build Phase"
     key: "build-group"
+    depends_on: "input-params"
     steps:
       - label: ":docker: Clone & Build vLLM Docker Image"
         key: "build-vllm-docker"
         <<: *base-config
         timeout_in_minutes: 120
         commands:
+          # Retrieve build parameters from block step
+          - echo "Retrieving build parameters..."
+          - export VLLM_BRANCH=$(buildkite-agent meta-data get "VLLM_BRANCH")
+          - export VLLM_COMMIT=$(buildkite-agent meta-data get "VLLM_COMMIT")
+          - export DOCKER_IMAGE_TAG="ghcr.io/embeddedllm/vllm-rocm-ci:${VLLM_COMMIT}"
+          - echo "Build parameters:"
+          - echo "  VLLM_BRANCH=${VLLM_BRANCH}"
+          - echo "  VLLM_COMMIT=${VLLM_COMMIT}"
+          - echo "  DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG}"
+          - echo ""
+
           # Authenticate with GitHub Container Registry
           - echo "Authenticating with GitHub Container Registry..."
           - |
@@ -52,14 +92,16 @@ steps:
               -f docker/Dockerfile.rocm \
               -t ${DOCKER_IMAGE_TAG} \
               --target test \
-              --build-arg REMOTE_VLLM=1 \
+              --build-arg REMOTE_VLLM=0 \
               --build-arg ARG_PYTORCH_ROCM_ARCH='gfx942' \
-              --build-arg VLLM_BRANCH=${VLLM_COMMIT} \
               --no-cache \
               --progress plain \
               .
           - docker push ${DOCKER_IMAGE_TAG}
           - echo "Docker image pushed successfully: ${DOCKER_IMAGE_TAG}"
+
+          # Store image tag for test steps
+          - buildkite-agent meta-data set "DOCKER_IMAGE_TAG" "${DOCKER_IMAGE_TAG}"
 
           # Logout for security
           - docker logout ghcr.io
@@ -77,7 +119,11 @@ steps:
         depends_on: "build-vllm-docker"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 1"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-text-mode1 \
@@ -99,7 +145,9 @@ steps:
         depends_on: "qwen25-7b-text-m1"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 2"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-text-mode2 \
@@ -121,7 +169,9 @@ steps:
         depends_on: "qwen25-7b-text-m2"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 3"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-text-mode3 \
@@ -143,7 +193,9 @@ steps:
         depends_on: "qwen25-7b-text-m3"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 4"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-text-mode4 \
@@ -166,7 +218,9 @@ steps:
         depends_on: "qwen25-7b-text-m4"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 1"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-image-mode1 \
@@ -188,7 +242,9 @@ steps:
         depends_on: "qwen25-7b-image-m1"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 2"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-image-mode2 \
@@ -210,7 +266,9 @@ steps:
         depends_on: "qwen25-7b-image-m2"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 3"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-image-mode3 \
@@ -232,7 +290,9 @@ steps:
         depends_on: "qwen25-7b-image-m3"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 4"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-image-mode4 \
@@ -255,7 +315,9 @@ steps:
         depends_on: "qwen25-7b-image-m4"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 1"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-audio-mode1 \
@@ -277,7 +339,9 @@ steps:
         depends_on: "qwen25-7b-audio-m1"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 2"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-audio-mode2 \
@@ -299,7 +363,9 @@ steps:
         depends_on: "qwen25-7b-audio-m2"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 3"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-audio-mode3 \
@@ -321,7 +387,9 @@ steps:
         depends_on: "qwen25-7b-audio-m3"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 4"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-audio-mode4 \
@@ -351,7 +419,9 @@ steps:
         depends_on: "qwen25-7b-audio-m4"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 1"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-text-mode1 \
@@ -373,7 +443,9 @@ steps:
         depends_on: "qwen3-30b-text-m1"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 2"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-text-mode2 \
@@ -395,7 +467,9 @@ steps:
         depends_on: "qwen3-30b-text-m2"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 3"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-text-mode3 \
@@ -417,7 +491,9 @@ steps:
         depends_on: "qwen3-30b-text-m3"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 4"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-text-mode4 \
@@ -440,7 +516,9 @@ steps:
         depends_on: "qwen3-30b-text-m4"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 1"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-image-mode1 \
@@ -462,7 +540,9 @@ steps:
         depends_on: "qwen3-30b-image-m1"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 2"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-image-mode2 \
@@ -484,7 +564,9 @@ steps:
         depends_on: "qwen3-30b-image-m2"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 3"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-image-mode3 \
@@ -506,7 +588,9 @@ steps:
         depends_on: "qwen3-30b-image-m3"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 4"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-image-mode4 \
@@ -529,7 +613,9 @@ steps:
         depends_on: "qwen3-30b-image-m4"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 1"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-audio-mode1 \
@@ -551,7 +637,9 @@ steps:
         depends_on: "qwen3-30b-audio-m1"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 2"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-audio-mode2 \
@@ -573,7 +661,9 @@ steps:
         depends_on: "qwen3-30b-audio-m2"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 3"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-audio-mode3 \
@@ -595,7 +685,9 @@ steps:
         depends_on: "qwen3-30b-audio-m3"
         <<: *base-config
         commands:
+          - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 4"
+          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen3-30b-audio-mode4 \
