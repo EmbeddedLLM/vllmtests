@@ -23,9 +23,9 @@ fi
 
 echo ">>> Using MODEL_PATH: $MODEL_PATH"
 
-export HIP_VISIBLE_DEVICES=4,5,6,7
+export HIP_VISIBLE_DEVICES=6,7
 
-TP_SIZE=4
+TP_SIZE=2
 
 # Parameter check
 if [ -z "$MODE" ]; then
@@ -106,7 +106,7 @@ echo ">>> Log file will be in: $(pwd)/eval_audio_${LOG_SUFFIX}.log"
 nohup python3 -m lmms_eval \
     --model vllm \
     --tasks voicebench_openbookqa \
-    --model_args model=$MODEL_PATH,tensor_parallel_size=$TP_SIZE,gpu_memory_utilization=0.9,enforce_eager=$EAGER_BOOL,trust_remote_code=True \
+    --model_args model=$MODEL_PATH,tensor_parallel_size=$TP_SIZE,gpu_memory_utilization=0.8,enforce_eager=$EAGER_BOOL,trust_remote_code=True \
     --output_path "results_audio_${LOG_SUFFIX}"
     # > "eval_audio_${LOG_SUFFIX}.log" 2>&1 &
 
