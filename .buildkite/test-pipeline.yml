@@ -552,6 +552,7 @@ steps:
         # depends_on: "qwen3-30b-text-m4"
         depends_on: "qwen3-30b-audio-m1"
         <<: *base-config
+        allow_dependency_failure: true
         commands:
           - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 1"
@@ -569,8 +570,8 @@ steps:
               -e HF_HUB_CACHE=/app/model \
               $${DOCKER_IMAGE_TAG} \
               bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_image_eval.sh 1 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
-          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
-          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+          # - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          # - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
 
       # - label: ":frame_with_picture: Qwen3-30B Image Mode 2 (Graph+AITER)"
       #   key: "qwen3-30b-image-m2"
@@ -650,6 +651,7 @@ steps:
         # depends_on: "qwen3-30b-image-m4"
         depends_on: "build-vllm-docker"
         <<: *base-config
+        allow_dependency_failure: true
         commands:
           - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 1"
@@ -667,8 +669,8 @@ steps:
               -e HF_HUB_CACHE=/app/model \
               $${DOCKER_IMAGE_TAG} \
               bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_audio_eval.sh 1 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
-          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
-          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+          # - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          # - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
 
       # - label: ":speaker: Qwen3-30B Audio Mode 2 (Graph+AITER)"
       #   key: "qwen3-30b-audio-m2"
