@@ -18,10 +18,9 @@ MODEL_PATH="/app/model/models--Qwen--Qwen2.5-Omni-7B/snapshots/ae9e1690543ffd5c0
 if [ -n "$2" ]; then
     MODEL_PATH="$2"
     echo ">>> Using custom MODEL_PATH: $MODEL_PATH"
-else
-    MODEL_PATH="$DEFAULT_MODEL_PATH"
-    echo ">>> Using default MODEL_PATH: $MODEL_PATH"
 fi
+
+echo ">>> Using MODEL_PATH: $MODEL_PATH"
 
 export HIP_VISIBLE_DEVICES=0,1
 TP_SIZE=2

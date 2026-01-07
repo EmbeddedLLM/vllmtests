@@ -56,84 +56,85 @@ steps:
         <<: *base-config
         timeout_in_minutes: 120
         commands:
-          # Retrieve build parameters from block step
-          - echo "Retrieving build parameters..."
-          - echo "=== Debug Available Metadata Keys ==="
-          - buildkite-agent meta-data keys
-          - echo "=== End Debug ==="
-          - |
-            # Retrieve from block step metadata
-            VLLM_BRANCH=$$(buildkite-agent meta-data get "VLLM_BRANCH" --default="main")
-            VLLM_COMMIT=$$(buildkite-agent meta-data get "VLLM_COMMIT" --default="latest")
+          - buildkite-agent meta-data set "DOCKER_IMAGE_TAG" "ghcr.io/embeddedllm/vllm-rocm-ci:41cfa50632c26c6064cabbbc43c9fc29c7792a2d"
+          # # Retrieve build parameters from block step
+          # - echo "Retrieving build parameters..."
+          # - echo "=== Debug Available Metadata Keys ==="
+          # - buildkite-agent meta-data keys
+          # - echo "=== End Debug ==="
+          # - |
+          #   # Retrieve from block step metadata
+          #   VLLM_BRANCH=$$(buildkite-agent meta-data get "VLLM_BRANCH" --default="main")
+          #   VLLM_COMMIT=$$(buildkite-agent meta-data get "VLLM_COMMIT" --default="latest")
 
-            echo "Raw metadata values:"
-            echo "  VLLM_BRANCH='$${VLLM_BRANCH}' (length: $${#VLLM_BRANCH})"
-            echo "  VLLM_COMMIT='$${VLLM_COMMIT}' (length: $${#VLLM_COMMIT})"
+          #   echo "Raw metadata values:"
+          #   echo "  VLLM_BRANCH='$${VLLM_BRANCH}' (length: $${#VLLM_BRANCH})"
+          #   echo "  VLLM_COMMIT='$${VLLM_COMMIT}' (length: $${#VLLM_COMMIT})"
 
-            # Handle empty strings (when metadata exists but is empty)
-            if [[ -z "$${VLLM_BRANCH}" ]]; then
-              VLLM_BRANCH="main"
-              echo "⚠️  VLLM_BRANCH was empty, using default: main"
-            fi
+          #   # Handle empty strings (when metadata exists but is empty)
+          #   if [[ -z "$${VLLM_BRANCH}" ]]; then
+          #     VLLM_BRANCH="main"
+          #     echo "⚠️  VLLM_BRANCH was empty, using default: main"
+          #   fi
 
-            if [[ -z "$${VLLM_COMMIT}" ]]; then
-              VLLM_COMMIT="latest"
-              echo "⚠️  VLLM_COMMIT was empty, using default: latest"
-            fi
+          #   if [[ -z "$${VLLM_COMMIT}" ]]; then
+          #     VLLM_COMMIT="latest"
+          #     echo "⚠️  VLLM_COMMIT was empty, using default: latest"
+          #   fi
 
-            export VLLM_BRANCH
-            export VLLM_COMMIT
-            export DOCKER_IMAGE_TAG="ghcr.io/embeddedllm/vllm-rocm-ci:$${VLLM_COMMIT}"
+          #   export VLLM_BRANCH
+          #   export VLLM_COMMIT
+          #   export DOCKER_IMAGE_TAG="ghcr.io/embeddedllm/vllm-rocm-ci:$${VLLM_COMMIT}"
 
-            echo ""
-            echo "Build parameters:"
-            echo "  VLLM_BRANCH=$${VLLM_BRANCH}"
-            echo "  VLLM_COMMIT=$${VLLM_COMMIT}"
-            echo "  DOCKER_IMAGE_TAG=$${DOCKER_IMAGE_TAG}"
-            echo ""
+          #   echo ""
+          #   echo "Build parameters:"
+          #   echo "  VLLM_BRANCH=$${VLLM_BRANCH}"
+          #   echo "  VLLM_COMMIT=$${VLLM_COMMIT}"
+          #   echo "  DOCKER_IMAGE_TAG=$${DOCKER_IMAGE_TAG}"
+          #   echo ""
 
-          # Authenticate with GitHub Container Registry
-          - echo "Authenticating with GitHub Container Registry..."
-          - |
-            if [[ -z "${GHCR_PAT:-}" ]]; then
-              echo "Error: GHCR credentials not configured in agent hooks"
-              echo "Please set GHCR_USERNAME and GHCR_PAT in ~/.buildkite-agent/hooks/environment"
-              exit 1
-            fi
-            echo "${GHCR_PAT}" | docker login ghcr.io \
-              -u "${GHCR_USERNAME}" \
-              --password-stdin
-          - echo "Successfully authenticated with GHCR"
+          # # Authenticate with GitHub Container Registry
+          # - echo "Authenticating with GitHub Container Registry..."
+          # - |
+          #   if [[ -z "${GHCR_PAT:-}" ]]; then
+          #     echo "Error: GHCR credentials not configured in agent hooks"
+          #     echo "Please set GHCR_USERNAME and GHCR_PAT in ~/.buildkite-agent/hooks/environment"
+          #     exit 1
+          #   fi
+          #   echo "${GHCR_PAT}" | docker login ghcr.io \
+          #     -u "${GHCR_USERNAME}" \
+          #     --password-stdin
+          # - echo "Successfully authenticated with GHCR"
 
-          # Clone and build vLLM
-          - |
-            echo "Cloning vLLM from branch $${VLLM_BRANCH} at commit $${VLLM_COMMIT}"
-            git clone --depth 1 --branch $${VLLM_BRANCH} https://github.com/vllm-project/vllm.git vllm-repo
-            cd vllm-repo
-            git checkout $${VLLM_COMMIT}
+          # # Clone and build vLLM
+          # - |
+          #   echo "Cloning vLLM from branch $${VLLM_BRANCH} at commit $${VLLM_COMMIT}"
+          #   git clone --depth 1 --branch $${VLLM_BRANCH} https://github.com/vllm-project/vllm.git vllm-repo
+          #   cd vllm-repo
+          #   git checkout $${VLLM_COMMIT}
 
-            docker pull rocm/vllm-dev:base
+          #   docker pull rocm/vllm-dev:base
 
-            echo "Building Docker image: $${DOCKER_IMAGE_TAG}"
-            docker build \
-              -f docker/Dockerfile.rocm \
-              -t $${DOCKER_IMAGE_TAG} \
-              --target test \
-              --build-arg REMOTE_VLLM=0 \
-              --build-arg ARG_PYTORCH_ROCM_ARCH='gfx942' \
-              --no-cache \
-              --progress plain \
-              .
+          #   echo "Building Docker image: $${DOCKER_IMAGE_TAG}"
+          #   docker build \
+          #     -f docker/Dockerfile.rocm \
+          #     -t $${DOCKER_IMAGE_TAG} \
+          #     --target test \
+          #     --build-arg REMOTE_VLLM=0 \
+          #     --build-arg ARG_PYTORCH_ROCM_ARCH='gfx942' \
+          #     --no-cache \
+          #     --progress plain \
+          #     .
 
-            echo "Pushing Docker image: $${DOCKER_IMAGE_TAG}"
-            docker push $${DOCKER_IMAGE_TAG}
-            echo "Docker image pushed successfully: $${DOCKER_IMAGE_TAG}"
+          #   echo "Pushing Docker image: $${DOCKER_IMAGE_TAG}"
+          #   docker push $${DOCKER_IMAGE_TAG}
+          #   echo "Docker image pushed successfully: $${DOCKER_IMAGE_TAG}"
 
-            # Store image tag for test steps
-            buildkite-agent meta-data set "DOCKER_IMAGE_TAG" "$${DOCKER_IMAGE_TAG}"
+          #   # Store image tag for test steps
+          #   buildkite-agent meta-data set "DOCKER_IMAGE_TAG" "$${DOCKER_IMAGE_TAG}"
 
-            # Logout for security
-            docker logout ghcr.io
+          #   # Logout for security
+          #   docker logout ghcr.io
 
   # ============================================================================
   # Qwen2.5-Omni-7B Tests
@@ -164,7 +165,7 @@ steps:
               -v $(pwd):/app/vllmtests \
               -e HF_HUB_CACHE=/app/model \
               $${DOCKER_IMAGE_TAG} \
-              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 1
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 1 "Qwen/Qwen2.5-Omni-7B"
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
 
@@ -188,7 +189,7 @@ steps:
               -v $(pwd):/app/vllmtests \
               -e HF_HUB_CACHE=/app/model \
               $${DOCKER_IMAGE_TAG} \
-              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 2
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 2 "Qwen/Qwen2.5-Omni-7B"
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
 
@@ -212,7 +213,7 @@ steps:
               -v $(pwd):/app/vllmtests \
               -e HF_HUB_CACHE=/app/model \
               $${DOCKER_IMAGE_TAG} \
-              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 3
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 3 "Qwen/Qwen2.5-Omni-7B"
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
           - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
 
