@@ -58,7 +58,7 @@ steps:
         commands:
           # Retrieve build parameters from block step
           - echo "Retrieving build parameters..."
-          - echo "=== Debug: Available Metadata Keys ==="
+          - echo "=== Debug Available Metadata Keys ==="
           - buildkite-agent meta-data keys
           - echo "=== End Debug ==="
           - export VLLM_BRANCH=$(buildkite-agent meta-data get "VLLM_BRANCH" --default="main")
