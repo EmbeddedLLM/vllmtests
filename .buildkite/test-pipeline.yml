@@ -106,9 +106,9 @@ steps:
           - echo "Successfully authenticated with GHCR"
 
           # Clone and build vLLM
-          - echo "Cloning vLLM from branch ${VLLM_BRANCH} at commit ${VLLM_COMMIT}"
-          - git clone --depth 1 --branch ${VLLM_BRANCH} https://github.com/vllm-project/vllm.git vllm-repo
-          - cd vllm-repo && git checkout ${VLLM_COMMIT}
+          - echo "Cloning vLLM from branch $${VLLM_BRANCH} at commit $${VLLM_COMMIT}"
+          - git clone --depth 1 --branch $${VLLM_BRANCH} https://github.com/vllm-project/vllm.git vllm-repo
+          - cd vllm-repo && git checkout $${VLLM_COMMIT}
           - |
             docker build \
               -f docker/Dockerfile.rocm \
