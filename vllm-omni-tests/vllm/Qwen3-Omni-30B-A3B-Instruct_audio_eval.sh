@@ -23,8 +23,9 @@ fi
 
 echo ">>> Using MODEL_PATH: $MODEL_PATH"
 
-export HIP_VISIBLE_DEVICES=0,1
-TP_SIZE=2
+export HIP_VISIBLE_DEVICES=4,5,6,7
+
+TP_SIZE=4
 
 # Parameter check
 if [ -z "$MODE" ]; then
