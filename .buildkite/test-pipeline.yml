@@ -1,0 +1,634 @@
+env:
+  VLLM_BRANCH: "${VLLM_BRANCH:-main}"
+  VLLM_COMMIT: "${VLLM_COMMIT:-latest}"
+  DOCKER_IMAGE_TAG: "ghcr.io/embeddedllm/vllm-rocm-ci:${VLLM_COMMIT}"
+  DOCKER_BUILDKIT: "1"
+
+# Reusable configuration anchor
+x-base-config: &base-config
+  agents:
+    queue: vllm-rocm-wheel
+  retry:
+    automatic:
+      - exit_status: -1  # Agent lost
+        limit: 1
+      - exit_status: -10  # Agent terminated
+        limit: 1
+      - exit_status: 1  # Generic failure
+        limit: 2
+  timeout_in_minutes: 60
+
+steps:
+  # ============================================================================
+  # Build Phase
+  # ============================================================================
+  - group: ":docker: Build Phase"
+    key: "build-group"
+    steps:
+      - label: ":docker: Clone & Build vLLM Docker Image"
+        key: "build-vllm-docker"
+        <<: *base-config
+        timeout_in_minutes: 120
+        commands:
+          # Authenticate with GitHub Container Registry
+          - echo "Authenticating with GitHub Container Registry..."
+          - |
+            if [[ -z "${GHCR_PAT:-}" ]]; then
+              echo "Error: GHCR credentials not configured in agent hooks"
+              echo "Please set GHCR_USERNAME and GHCR_PAT in ~/.buildkite-agent/hooks/environment"
+              exit 1
+            fi
+            echo "${GHCR_PAT}" | docker login ghcr.io \
+              -u "${GHCR_USERNAME}" \
+              --password-stdin
+          - echo "Successfully authenticated with GHCR"
+
+          # Clone and build vLLM
+          - echo "Cloning vLLM from branch ${VLLM_BRANCH} at commit ${VLLM_COMMIT}"
+          - git clone --depth 1 --branch ${VLLM_BRANCH} https://github.com/vllm-project/vllm.git vllm-repo
+          - cd vllm-repo && git checkout ${VLLM_COMMIT}
+          - |
+            docker build \
+              -f docker/Dockerfile.rocm \
+              -t ${DOCKER_IMAGE_TAG} \
+              --target test \
+              --build-arg REMOTE_VLLM=1 \
+              --build-arg ARG_PYTORCH_ROCM_ARCH='gfx942' \
+              --build-arg VLLM_BRANCH=${VLLM_COMMIT} \
+              --no-cache \
+              --progress plain \
+              .
+          - docker push ${DOCKER_IMAGE_TAG}
+          - echo "Docker image pushed successfully: ${DOCKER_IMAGE_TAG}"
+
+          # Logout for security
+          - docker logout ghcr.io
+
+  # ============================================================================
+  # Qwen2.5-Omni-7B Tests
+  # ============================================================================
+  - group: ":robot: Qwen2.5-Omni-7B Tests"
+    key: "qwen25-7b-group"
+    depends_on: "build-vllm-docker"
+    steps:
+      # Text Evaluation Tests
+      - label: ":memo: Qwen2.5-7B Text Mode 1 (Eager+AITER)"
+        key: "qwen25-7b-text-m1"
+        depends_on: "build-vllm-docker"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 1"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-text-mode1 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 1
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":memo: Qwen2.5-7B Text Mode 2 (Graph+AITER)"
+        key: "qwen25-7b-text-m2"
+        depends_on: "qwen25-7b-text-m1"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 2"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-text-mode2 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 2
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":memo: Qwen2.5-7B Text Mode 3 (Eager+No AITER)"
+        key: "qwen25-7b-text-m3"
+        depends_on: "qwen25-7b-text-m2"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 3"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-text-mode3 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 3
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":memo: Qwen2.5-7B Text Mode 4 (Graph+No AITER)"
+        key: "qwen25-7b-text-m4"
+        depends_on: "qwen25-7b-text-m3"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 4"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-text-mode4 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 4
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      # Image Evaluation Tests
+      - label: ":frame_with_picture: Qwen2.5-7B Image Mode 1 (Eager+AITER)"
+        key: "qwen25-7b-image-m1"
+        depends_on: "qwen25-7b-text-m4"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 1"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-image-mode1 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_image_eval.sh 1
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":frame_with_picture: Qwen2.5-7B Image Mode 2 (Graph+AITER)"
+        key: "qwen25-7b-image-m2"
+        depends_on: "qwen25-7b-image-m1"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 2"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-image-mode2 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_image_eval.sh 2
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":frame_with_picture: Qwen2.5-7B Image Mode 3 (Eager+No AITER)"
+        key: "qwen25-7b-image-m3"
+        depends_on: "qwen25-7b-image-m2"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 3"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-image-mode3 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_image_eval.sh 3
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":frame_with_picture: Qwen2.5-7B Image Mode 4 (Graph+No AITER)"
+        key: "qwen25-7b-image-m4"
+        depends_on: "qwen25-7b-image-m3"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B image evaluation - Mode 4"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-image-mode4 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_image_eval.sh 4
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      # Audio Evaluation Tests
+      - label: ":speaker: Qwen2.5-7B Audio Mode 1 (Eager+AITER)"
+        key: "qwen25-7b-audio-m1"
+        depends_on: "qwen25-7b-image-m4"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 1"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-audio-mode1 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_audio_eval.sh 1
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":speaker: Qwen2.5-7B Audio Mode 2 (Graph+AITER)"
+        key: "qwen25-7b-audio-m2"
+        depends_on: "qwen25-7b-audio-m1"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 2"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-audio-mode2 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_audio_eval.sh 2
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":speaker: Qwen2.5-7B Audio Mode 3 (Eager+No AITER)"
+        key: "qwen25-7b-audio-m3"
+        depends_on: "qwen25-7b-audio-m2"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 3"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-audio-mode3 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_audio_eval.sh 3
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":speaker: Qwen2.5-7B Audio Mode 4 (Graph+No AITER)"
+        key: "qwen25-7b-audio-m4"
+        depends_on: "qwen25-7b-audio-m3"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen2.5-Omni-7B audio evaluation - Mode 4"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen25-7b-audio-mode4 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_audio_eval.sh 4
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+  # ============================================================================
+  # Qwen3-Omni-30B-A3B-Instruct Tests
+  # ============================================================================
+  - group: ":rocket: Qwen3-Omni-30B-A3B-Instruct Tests"
+    key: "qwen3-30b-group"
+    depends_on: "qwen25-7b-audio-m4"
+    steps:
+      # Text Evaluation Tests
+      - label: ":memo: Qwen3-30B Text Mode 1 (Eager+AITER)"
+        key: "qwen3-30b-text-m1"
+        depends_on: "qwen25-7b-audio-m4"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 1"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-text-mode1 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_text_eval.sh 1
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":memo: Qwen3-30B Text Mode 2 (Graph+AITER)"
+        key: "qwen3-30b-text-m2"
+        depends_on: "qwen3-30b-text-m1"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 2"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-text-mode2 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_text_eval.sh 2
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":memo: Qwen3-30B Text Mode 3 (Eager+No AITER)"
+        key: "qwen3-30b-text-m3"
+        depends_on: "qwen3-30b-text-m2"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 3"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-text-mode3 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_text_eval.sh 3
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":memo: Qwen3-30B Text Mode 4 (Graph+No AITER)"
+        key: "qwen3-30b-text-m4"
+        depends_on: "qwen3-30b-text-m3"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct text evaluation - Mode 4"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-text-mode4 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_text_eval.sh 4
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      # Image Evaluation Tests
+      - label: ":frame_with_picture: Qwen3-30B Image Mode 1 (Eager+AITER)"
+        key: "qwen3-30b-image-m1"
+        depends_on: "qwen3-30b-text-m4"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 1"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-image-mode1 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_image_eval.sh 1
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":frame_with_picture: Qwen3-30B Image Mode 2 (Graph+AITER)"
+        key: "qwen3-30b-image-m2"
+        depends_on: "qwen3-30b-image-m1"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 2"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-image-mode2 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_image_eval.sh 2
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":frame_with_picture: Qwen3-30B Image Mode 3 (Eager+No AITER)"
+        key: "qwen3-30b-image-m3"
+        depends_on: "qwen3-30b-image-m2"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 3"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-image-mode3 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_image_eval.sh 3
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":frame_with_picture: Qwen3-30B Image Mode 4 (Graph+No AITER)"
+        key: "qwen3-30b-image-m4"
+        depends_on: "qwen3-30b-image-m3"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct image evaluation - Mode 4"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-image-mode4 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_image_eval.sh 4
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      # Audio Evaluation Tests
+      - label: ":speaker: Qwen3-30B Audio Mode 1 (Eager+AITER)"
+        key: "qwen3-30b-audio-m1"
+        depends_on: "qwen3-30b-image-m4"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 1"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-audio-mode1 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_audio_eval.sh 1
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":speaker: Qwen3-30B Audio Mode 2 (Graph+AITER)"
+        key: "qwen3-30b-audio-m2"
+        depends_on: "qwen3-30b-audio-m1"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 2"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-audio-mode2 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_audio_eval.sh 2
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":speaker: Qwen3-30B Audio Mode 3 (Eager+No AITER)"
+        key: "qwen3-30b-audio-m3"
+        depends_on: "qwen3-30b-audio-m2"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 3"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-audio-mode3 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_audio_eval.sh 3
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+      - label: ":speaker: Qwen3-30B Audio Mode 4 (Graph+No AITER)"
+        key: "qwen3-30b-audio-m4"
+        depends_on: "qwen3-30b-audio-m3"
+        <<: *base-config
+        commands:
+          - echo "Running Qwen3-Omni-30B-A3B-Instruct audio evaluation - Mode 4"
+          - |
+            docker run --rm \
+              --name vllm-test-qwen3-30b-audio-mode4 \
+              --privileged \
+              --network=host \
+              --device=/dev/kfd \
+              --device=/dev/dri \
+              --shm-size=128g \
+              -v /home/amd/models:/app/model \
+              -v $(pwd):/app/vllmtests \
+              -e HF_HUB_CACHE=/app/model \
+              ${DOCKER_IMAGE_TAG} \
+              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_audio_eval.sh 4
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+
+  # ============================================================================
+  # Cleanup
+  # ============================================================================
+  - wait: ~
+    continue_on_failure: true
+
+  - group: ":broom: Cleanup"
+    key: "cleanup-group"
+    steps:
+      - label: ":broom: Cleanup Containers and Processes"
+        key: "cleanup"
+        depends_on: "qwen3-30b-audio-m4"
+        allow_dependency_failure: true
+        <<: *base-config
+        commands:
+          - echo "Cleaning up Docker containers and vLLM processes"
+          - docker ps -a | grep vllm-test- | awk '{print $1}' | xargs -r docker stop || true
+          - docker ps -a | grep vllm-test- | awk '{print $1}' | xargs -r docker rm || true
+          - pkill -9 -f "vllm serve" || true
+          - echo "Cleanup completed"
