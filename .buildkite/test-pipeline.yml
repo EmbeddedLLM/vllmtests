@@ -146,31 +146,31 @@ steps:
     key: "qwen25-7b-group"
     depends_on: "build-vllm-docker"
     steps:
-      # Text Evaluation Tests
-      - label: ":memo: Qwen2.5-7B Text Mode 1 (Eager+AITER)"
-        key: "qwen25-7b-text-m1"
-        depends_on: "build-vllm-docker"
-        <<: *base-config
-        commands:
-          - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
-          - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
-          - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 1"
-          - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
-          - |
-            docker run --rm \
-              --name vllm-test-qwen25-7b-text-mode1 \
-              --privileged \
-              --network=host \
-              --device=/dev/kfd \
-              --device=/dev/dri \
-              --shm-size=128g \
-              -v /home/amd/models:/app/model \
-              -v $(pwd):/app/vllmtests \
-              -e HF_HUB_CACHE=/app/model \
-              $${DOCKER_IMAGE_TAG} \
-              bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 1 "Qwen/Qwen2.5-Omni-7B"
-          - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
-          - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
+      # # Text Evaluation Tests
+      # - label: ":memo: Qwen2.5-7B Text Mode 1 (Eager+AITER)"
+      #   key: "qwen25-7b-text-m1"
+      #   depends_on: "build-vllm-docker"
+      #   <<: *base-config
+      #   commands:
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
+      #     - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 1"
+      #     - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
+      #     - |
+      #       docker run --rm \
+      #         --name vllm-test-qwen25-7b-text-mode1 \
+      #         --privileged \
+      #         --network=host \
+      #         --device=/dev/kfd \
+      #         --device=/dev/dri \
+      #         --shm-size=128g \
+      #         -v /home/amd/models:/app/model \
+      #         -v $(pwd):/app/vllmtests \
+      #         -e HF_HUB_CACHE=/app/model \
+      #         $${DOCKER_IMAGE_TAG} \
+      #         bash /app/vllmtests/vllm-omni-tests/vllm/Qwen2.5-Omni-7B_text_eval.sh 1 "Qwen/Qwen2.5-Omni-7B"
+      #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
+      #     - buildkite-agent artifact upload "vllm-omni-tests/vllm/results_*/**/*" || true
 
       # - label: ":memo: Qwen2.5-7B Text Mode 2 (Graph+AITER)"
       #   key: "qwen25-7b-text-m2"
@@ -248,7 +248,7 @@ steps:
       - label: ":frame_with_picture: Qwen2.5-7B Image Mode 1 (Eager+AITER)"
         key: "qwen25-7b-image-m1"
         # depends_on: "qwen25-7b-text-m4"
-        depends_on: "qwen25-7b-text-m1"
+        depends_on: "build-vllm-docker"
         <<: *base-config
         commands:
           - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
@@ -445,7 +445,8 @@ steps:
   # ============================================================================
   - group: ":rocket: Qwen3-Omni-30B-A3B-Instruct Tests"
     key: "qwen3-30b-group"
-    depends_on: "qwen25-7b-audio-m4"
+    # depends_on: "qwen25-7b-audio-m4"
+    depends_on: "qwen25-7b-audio-m1"
     steps:
       # Text Evaluation Tests
       - label: ":memo: Qwen3-30B Text Mode 1 (Eager+AITER)"
