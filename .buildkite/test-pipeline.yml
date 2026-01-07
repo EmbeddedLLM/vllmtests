@@ -112,6 +112,8 @@ steps:
             cd vllm-repo
             git checkout $${VLLM_COMMIT}
 
+            docker pull rocm/vllm-dev:base
+
             echo "Building Docker image: $${DOCKER_IMAGE_TAG}"
             docker build \
               -f docker/Dockerfile.rocm \
@@ -149,8 +151,7 @@ steps:
           - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 1"
-          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
-          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
+          - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-text-mode1 \
@@ -174,7 +175,7 @@ steps:
         commands:
           - export DOCKER_IMAGE_TAG=$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 2"
-          - echo "Using Docker image: ${DOCKER_IMAGE_TAG}"
+          - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-text-mode2 \
@@ -198,7 +199,7 @@ steps:
         commands:
           - export DOCKER_IMAGE_TAG=$$(buildkite-agent meta-data get "DOCKER_IMAGE_TAG")
           - echo "Running Qwen2.5-Omni-7B text evaluation - Mode 3"
-          - echo "Using Docker image: $${DOCKER_IMAGE_TAG}"
+          - echo "Using Docker image $${DOCKER_IMAGE_TAG}"
           - |
             docker run --rm \
               --name vllm-test-qwen25-7b-text-mode3 \
@@ -742,7 +743,7 @@ steps:
     steps:
       - label: ":broom: Cleanup Containers and Processes"
         key: "cleanup"
-        depends_on: "qwen3-30b-audio-m4"
+        depends_on: "qwen25-7b-text-m3"
         allow_dependency_failure: true
         <<: *base-config
         commands:
