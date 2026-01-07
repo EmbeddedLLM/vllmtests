@@ -153,6 +153,8 @@ echo ">>> All Tests Done! Stopping server..."
 kill $SERVER_PID
 wait $SERVER_PID 2>/dev/null
 
+rm -rf $OUTPUT_DIR
+rm -rf $LOG_FILE
 cd ../
 rm -rf $MISTRAL_DIR
 
