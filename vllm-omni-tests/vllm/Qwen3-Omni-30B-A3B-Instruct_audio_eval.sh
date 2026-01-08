@@ -23,7 +23,7 @@ fi
 
 echo ">>> Using MODEL_PATH: $MODEL_PATH"
 
-export HIP_VISIBLE_DEVICES=6,7
+export HIP_VISIBLE_DEVICES=0,1
 
 TP_SIZE=2
 
