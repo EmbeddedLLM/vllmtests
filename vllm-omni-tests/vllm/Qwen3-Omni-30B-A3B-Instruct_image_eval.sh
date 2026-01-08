@@ -109,7 +109,7 @@ for i in {1..60}; do
 done
 
 # Step 3: Prepare Mistral Evals Environment
-TEST_ROOT="/app/vllmtests"
+TEST_ROOT="/app"
 MISTRAL_DIR="$TEST_ROOT/mistral-evals"
 
 # Ensure directory exists
