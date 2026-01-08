@@ -568,6 +568,7 @@ steps:
               -v /home/amd/models:/app/model \
               -v $(pwd):/app/vllmtests \
               -e HF_HUB_CACHE=/app/model \
+              -e HF_TOKEN=$${HF_TOKEN} \
               $${DOCKER_IMAGE_TAG} \
               bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_image_eval.sh 1 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
           # - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
@@ -667,6 +668,7 @@ steps:
               -v /home/amd/models:/app/model \
               -v $(pwd):/app/vllmtests \
               -e HF_HUB_CACHE=/app/model \
+              -e HF_TOKEN=$${HF_TOKEN} \
               $${DOCKER_IMAGE_TAG} \
               bash /app/vllmtests/vllm-omni-tests/vllm/Qwen3-Omni-30B-A3B-Instruct_audio_eval.sh 1 "Qwen/Qwen3-Omni-30B-A3B-Instruct"
           # - buildkite-agent artifact upload "vllm-omni-tests/vllm/eval_*.log" || true
