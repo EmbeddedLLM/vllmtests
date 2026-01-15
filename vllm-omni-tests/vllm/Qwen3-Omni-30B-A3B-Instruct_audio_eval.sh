@@ -107,8 +107,8 @@ nohup python3 -m lmms_eval \
     --model vllm \
     --tasks voicebench_openbookqa \
     --model_args model=$MODEL_PATH,tensor_parallel_size=$TP_SIZE,gpu_memory_utilization=0.8,enforce_eager=$EAGER_BOOL,trust_remote_code=True \
-    --output_path "results_audio_${LOG_SUFFIX}"
-    # > "eval_audio_${LOG_SUFFIX}.log" 2>&1 &
+    --output_path "results_audio_${LOG_SUFFIX}" \
+    > "eval_audio_${LOG_SUFFIX}.log" 2>&1 &
 
 EVAL_PID=$!
 echo "Evaluation PID: $EVAL_PID"
@@ -120,7 +120,5 @@ wait $EVAL_PID
 echo "Audio Eval Finished."
 tail -n 20 "eval_audio_${LOG_SUFFIX}.log"
 
-rm -rf "results_audio_${LOG_SUFFIX}"
-rm -rf "eval_audio_${LOG_SUFFIX}.log"
 cd ../
 rm -rf $LMMS_DIR

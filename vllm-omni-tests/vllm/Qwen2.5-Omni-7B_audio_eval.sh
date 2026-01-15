@@ -117,7 +117,6 @@ echo "To follow logs: tail -f eval_audio_${LOG_SUFFIX}.log"
 wait $EVAL_PID
 echo "Audio Eval Finished."
 
-cd ../
 rm -rf $LMMS_DIR
 
 tail -n 20 "eval_audio_${LOG_SUFFIX}.log"
